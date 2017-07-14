@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="David Benkeser &amp; Nima Hejazi" />
+
+<meta name="date" content="2017-07-14" />
+
+<title>Targeted Learning for Survival Analysis with Competing Risks</title>
+
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+</style>
+
+
+
+<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Targeted Learning for Survival Analysis with Competing Risks</h1>
+<h4 class="author"><em>David Benkeser &amp; Nima Hejazi</em></h4>
+<h4 class="date"><em>2017-07-14</em></h4>
+
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>The <code>survtmle</code> package is designed to use targeted minimum loss-based estimation (TMLE) to compute baseline covariate-adjusted estimates of marginal cumulative incidence in right-censored survival settings with (and without) competing risks. The package facilitates flexible modeling to adjust for covariates through the use of ensemble machine learning via the <a href="https://CRAN.R-project.org/package=SuperLearner"><code>SuperLearner</code></a> package.</p>
+<hr />
+</div>
+<div id="single-failure-type" class="section level2">
+<h2>Single failure type</h2>
+<p>We examine the use of <code>survtmle</code> in a variety of simple examples. The package can be loaded as follows:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(survtmle)</code></pre></div>
+<pre><code>## survtmle: Targeted Learning for Survival Analysis</code></pre>
+<pre><code>## Version: 1.0.0</code></pre>
+<p>We simulate a simple data with no censoring and a single cause of failure to illustrate the machinery of the <code>survtmle</code> package.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
+n &lt;-<span class="st"> </span><span class="dv">200</span>
+t_0 &lt;-<span class="st"> </span><span class="dv">6</span>
+trt &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>)
+adjustVars &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">W1 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n)), <span class="dt">W2 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">2</span>)))
+ftime &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="dv">1</span> +<span class="st"> </span><span class="kw">runif</span>(n, <span class="dv">1</span>, <span class="dv">4</span>) -<span class="st"> </span>trt +<span class="st"> </span>adjustVars$W1 +<span class="st"> </span>adjustVars$W2)
+ftype &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">1</span>))</code></pre></div>
+<p>The simple data structure contains a set of baseline covariates (<code>adjustVars</code>), a binary treatment variable (<code>trt</code>), a failure time that is a function of the treatment, adjustment variables, and a random error (<code>ftime</code>), and a failure type (<code>ftype</code>), which denotes the cause of failure (0 means no failure, 1 means failure). The first few rows of data can be viewed as follows.</p>
+<pre><code>## # A tibble: 200 x 5
+##    ftype ftime   trt    W1    W2
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1     0     5     0     1     1
+##  2     1     4     1     1     1
+##  3     1     4     1     0     2
+##  4     0     6     1     1     2
+##  5     0     4     1     1     1
+##  6     1     3     1     1     0
+##  7     0     7     0     0     2
+##  8     0     3     0     0     0
+##  9     1     4     1     0     1
+## 10     0     4     1     1     1
+## # ... with 190 more rows</code></pre>
+<hr />
+<div id="using-the-method-of-iterated-means" class="section level3">
+<h3>Using the method of iterated means</h3>
+<div id="covariate-adjustment-via-logistic-regression" class="section level4">
+<h4>Covariate adjustment via logistic regression</h4>
+<p>A common goal is to compare the incidence of failure at a fixed time between the two treatment groups. Covariate adjustment is often desirable in this comparison to improve efficiency <span class="citation">(Moore and Laan 2009)</span>. This covariate adjustment may be facilitated by estimating a series of iterated covariate-conditional means <span class="citation">(J. M. Robins 1999,<span class="citation">Bang and Robins (2005)</span>,<span class="citation">Laan and Gruber (2012)</span>)</span>. The final iterated covariate-conditional mean is marginalized over the empirical distribution of baseline covariates to obtain an estimate of the marginal cumulative incidence.</p>
+<p>Here, we invoke the eponymous <code>survtmle</code> function to compute the iterated mean-based (<code>method = &quot;mean&quot;</code>) covariate-adjusted estimates of the cumulative incidence at time six (<code>t0 = 6</code>) in each of the treatment groups using quasi-logistic regression (formula specified via <code>glm.ftime</code>) to estimate the iterated means. The <code>glm.ftime</code> argument should be a valid right-hand-side formula specification based on <code>colnames(adjustVars)</code> and <code>&quot;trt&quot;</code>. Here we use a simple main terms regression.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 1: Use GLM-based estimators for failure w/ &quot;mean&quot; method</span>
+fit1 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0)</code></pre></div>
+<pre><code>## Warning in checkInputs(ftime = ftime, ftype = ftype, trt = trt, t0 = t0, :
+## glm.trt and SL.trt not specified. Proceeding with glm.trt = '1'</code></pre>
+<pre><code>## Warning in checkInputs(ftime = ftime, ftype = ftype, trt = trt, t0 = t0, :
+## glm.ctime and SL.ctime not specified. Computing Kaplan-Meier estimates.</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fit1</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5667312
+## 1 1 0.7353291
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0031770491 0.0002159195
+## 1 1 0.0002159195 0.0022831146</code></pre>
+<p>Internally, <code>survtmle</code> estimates the covariate-conditional treatment probability (via <code>glm.trt</code> or <code>SL.trt</code>, see below) and covariate-conditional censoring distribution (via <code>glm.ctime</code> or <code>SL.ctime</code>, see below). In the above example, the treatment probability does not depend on covariates (as in e.g., a randomized trial) and so we did not specify a way to adjust for covariates in estimating the treatment probability. In this case, <code>survtmle</code> sets <code>glm.trt = &quot;1&quot;</code>, which corresponds with empirical estimates of treatment probability, and sets <code>glm.ctime</code> to be equivalent to the Kaplan-Meier censoring distribution estimates.</p>
+<p>In practice, we may wish to adjust for covariates when computing estimates of the covariate-conditional treatment and censoring probabilities. In observational studies, the distribution of treatment may differ by measured covariates, while in almost any study (including randomized trials) it is possible that censoring differs by covariates. Thus, we often wish to adjust for covariates to account for measured confounders of treatment receipt and censoring.</p>
+<p>This adjustment may be accomplished using logistic regression through the <code>glm.trt</code> and <code>glm.ctime</code> arguments, respectively. The <code>glm.trt</code> argument should be a valid right-hand-side formula specification based on <code>colnames(adjustVars)</code>. The <code>glm.ctime</code> argument should be a valid right-hand-side formula specification based on <code>colnames(adjustVars)</code>, <code>&quot;trt&quot;</code>, and <code>&quot;t&quot;</code> used to model the hazard function for censoring. By including <code>&quot;trt&quot;</code> and <code>&quot;t&quot;</code>, the function allows censoring probabilities to depend on treatment assignment and time, respectively. Here we call <code>survtmle</code> again, now adjusting for covariates in the treatment and censoring fits.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 2: Use GLM-based estimators for failure, treatment, and censoring with the</span>
+<span class="co">#        &quot;mean&quot; method</span>
+fit2 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;W1 + trt + t + I(t^2)&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit2</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5657950
+## 1 1 0.7411658
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0029470633 0.0002170549
+## 1 1 0.0002170549 0.0016411250</code></pre>
+</div>
+<div id="covariate-adjustment-via-super-learner" class="section level4">
+<h4>Covariate adjustment via Super Learner</h4>
+<p>While we can certainly use logistic regression to model the treatment, censoring, and iterated means, a large benefit afforded by the <code>survtmle</code> package is how it leverages <code>SuperLearner</code> ensemble machine learning to estimate these quantities in a more flexible manner. The Super Learner method is a generalization of stacked regression <span class="citation">(Breiman 1996)</span> that uses cross-validation to select the best-performing estimator from a library of candidate estimators <span class="citation">(Laan, Polley, and Hubbard 2007)</span>. Many popular machine learning algorithms have been implemented in the <a href="https://cran.r-project.org/package=SuperLearner"><code>SuperLearner</code></a>.</p>
+<p>To utilize <code>SuperLearner</code> estimates, we can utilize options <code>SL.trt</code>, <code>SL.ctime</code>, and <code>SL.ftime</code> to estimate conditional treatment, censoring, and iterated means, respectively. See <code>?SuperLearner</code> for details on options for correctly specifying a super learner library and see <code>listWrappers()</code> to print the methods implemented in the <code>SuperLearner</code> package. Here we demonstrate a call to <code>survtmle</code> using a simple library that includes simple algorithms that are included in base <code>R</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 3: SuperLearner estimators for treatment, failure, and censoring.</span>
+fit3 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">SL.trt =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ftime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ctime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0)</code></pre></div>
+<pre><code>## Loading required package: nnls</code></pre>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fit3</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5541546
+## 1 1 0.7140480
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0027940998 0.0001872402
+## 1 1 0.0001872402 0.0017399509</code></pre>
+<p><strong>Remark:</strong> Invoking <code>survtmle</code> with <code>method = &quot;mean&quot;</code> and <code>SL.ftime</code> requires fitting a Super Learner <em>for each time point</em> from <code>seq_len(t0)</code>. If there are many unique time points observed in the data, this can become a computationally intensive process. In such cases, we recommend either redefining the <code>ftime</code> variable to pool across time points <em>or</em> using <code>method = &quot;hazard&quot;</code> (see below).</p>
+<hr />
+</div>
+</div>
+<div id="using-the-method-of-cause-specific-hazards" class="section level3">
+<h3>Using the method of cause-specific hazards</h3>
+<p>An alternative method to the iterated mean-based TMLE for estimating cumulative incidence is based on estimated the (cause-specific) hazard function. This estimator is implemented by specifying <code>method = &quot;hazard&quot;</code> in a call to <code>survtmle</code>. Just as with <code>method = &quot;mean&quot;</code>, we can use either <code>glm.</code> or <code>SL.</code> to adjust for covariates. However, now the <code>glm.ftime</code> formula may additionally include functions of time, as this formula is now being used in a pooled regression to estimate cause-specific hazards over time.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 4: GLM estimators for treatment, censoring, and failure w/ &quot;hazard&quot; method</span>
+<span class="co"># Note the inclusion of 't' in the formula for glm.ftime.</span>
+fit4 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2 + t + I(t^2)&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2*t&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;hazard&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit4</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5864610
+## 1 1 0.7788141
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0028138563 0.0002638809
+## 1 1 0.0002638809 0.0018133124</code></pre>
+<p>Here’s an example using Super Learner.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 5: SuperLearner estimators for failure and censoring, alongside empirical</span>
+<span class="co">#        estimators for treatment (the default) using the &quot;hazard&quot; method.</span>
+<span class="co">#        Note that the super learner for ftime is also adjusting for time.</span>
+fit5 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">SL.trt =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>, <span class="st">&quot;SL.mean&quot;</span>, <span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ftime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>, <span class="st">&quot;SL.mean&quot;</span>, <span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ctime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>, <span class="st">&quot;SL.mean&quot;</span>, <span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">method =</span> <span class="st">&quot;hazard&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit5</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5836815
+## 1 1 0.7634571
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0026784034 0.0002269052
+## 1 1 0.0002269052 0.0020455780</code></pre>
+<p><strong>Remark:</strong> The TMLE algorithm for the hazard-based estimator differs from the iterated mean-based TMLE. In particular, the algorithm is iterative and has no guarantee of convergence. While we have not identified instances where convergence is a serious problem, we encourage users to submit any such situations as <a href="https://github.com/benkeser/survtmle/issues">GitHub issues</a> or to write directly to <a href="mailto:benkeser@emory.edu">benkeser@emory.edu</a>. The stopping criteria for the iteration may be adjusted via <code>tol</code> and <code>maxIter</code> options. Increasing <code>tol</code> or decreasing <code>maxIter</code> will lead to faster convergence; however, it is recommended that <code>tol</code> be set no larger than <code>1 / sqrt(length(ftime))</code>. If <code>maxIter</code> is reached without convergence, one should check that <code>fit$meanIC</code> are all less than <code>1 / sqrt(length(ftime))</code>.</p>
+<hr />
+</div>
+</div>
+<div id="multiple-failure-types" class="section level2">
+<h2>Multiple failure types</h2>
+<p>In all of the preceding examples, we have restricted our attention to the case where there is only a single failure type of interest. Now we consider more scenarios where we observe multiple failure types. First, we simulate data with two types of failure.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
+n &lt;-<span class="st"> </span><span class="dv">200</span>
+trt &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>)
+adjustVars &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">W1 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n)), <span class="dt">W2 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">2</span>)))
+ftime &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="dv">1</span> +<span class="st"> </span><span class="kw">runif</span>(n, <span class="dv">1</span>, <span class="dv">4</span>) -<span class="st"> </span>trt +<span class="st"> </span>adjustVars$W1 +<span class="st"> </span>adjustVars$W2)
+ftype &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">2</span>))</code></pre></div>
+<p>This simulated data structure is similar to the single failure type data; however, now the failure type variable (<code>ftype</code>) now contains two distinct types of failure (with 0 still reserved for no failure).</p>
+<pre><code>## # A tibble: 200 x 5
+##    ftype ftime   trt    W1    W2
+##    &lt;dbl&gt; &lt;dbl&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1     0     5     0     1     1
+##  2     2     4     1     1     1
+##  3     1     4     1     0     2
+##  4     1     6     1     1     2
+##  5     1     4     1     1     1
+##  6     1     3     1     1     0
+##  7     0     7     0     0     2
+##  8     1     3     0     0     0
+##  9     1     4     1     0     1
+## 10     1     4     1     1     1
+## # ... with 190 more rows</code></pre>
+<p>When multiple failure types are present, a common goal is to compare the cumulative incidence of a particular failure type at a fixed time between the two treatment groups, while accounting for the fact that participants may fail due to other failure types. Covariate adjustment is again desirable to improve efficiency and account for measured confounders of treatment and censoring.</p>
+<div id="using-the-method-of-iterated-means-1" class="section level3">
+<h3>Using the method of iterated means</h3>
+<div id="covariate-adjustment-via-logistic-regression-1" class="section level4">
+<h4>Covariate adjustment via logistic regression</h4>
+<p>The call to invoke <code>survtmle</code> is exactly the same as in the single failure type case.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 6: GLM estimators for treatment, censoring, and failure w/ &quot;mean&quot; method</span>
+fit6 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit6</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4229114
+## 1 1 0.6029411
+## 0 2 0.2517493
+## 1 2 0.2968020
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  3.518965e-03  2.105261e-05 -1.689263e-03  5.957709e-05
+## 1 1  2.105261e-05  3.227379e-03 -2.396184e-05 -2.382514e-03
+## 0 2 -1.689263e-03 -2.396184e-05  2.544764e-03  7.728650e-05
+## 1 2  5.957709e-05 -2.382514e-03  7.728650e-05  2.615476e-03</code></pre>
+<p>The output object contains cumulative incidence estimates for each of the four groups defined by the two failure types and treatments.</p>
+<p>There are sometimes failure types that are not of direct interest to out study. Because <code>survtmle</code> invoked with <code>method = &quot;mean&quot;</code> computes an estimate of the cumulative incidence of each failure type separately, we can save on computation time by specifying which failure types we care about via the <code>ftypeOfInterest</code> option.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 7: GLM estimators for treatment, censoring, and failure w/ &quot;mean&quot; method</span>
+fit7 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0,
+                 <span class="dt">ftypeOfInterest =</span> <span class="dv">1</span>)
+fit7</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4229114
+## 1 1 0.6029411
+## 
+## $var
+##              0 1          1 1
+## 0 1 3.518965e-03 2.105261e-05
+## 1 1 2.105261e-05 3.227379e-03</code></pre>
+</div>
+<div id="covariate-adjustment-via-super-learner-1" class="section level4">
+<h4>Covariate adjustment via Super Learner</h4>
+<p>As before, we can use the <code>SuperLearner</code> ensemble learning algorithm to adjust for covariates in multiple failure type settings as well.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 8: SuperLearner estimators for failure and censoring and empirical</span>
+<span class="co">#        estimators for treatment (default) using the &quot;mean&quot; method.</span>
+fit8 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">SL.trt =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ftime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">SL.ctime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit8</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4347158
+## 1 1 0.6060303
+## 0 2 0.2501808
+## 1 2 0.2751184
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  2.689783e-03  2.060343e-05 -1.301778e-03  4.322551e-05
+## 1 1  2.060343e-05  2.514412e-03 -6.451645e-06 -1.707281e-03
+## 0 2 -1.301778e-03 -6.451645e-06  2.059196e-03  6.360288e-05
+## 1 2  4.322551e-05 -1.707281e-03  6.360288e-05  1.954279e-03</code></pre>
+<p><strong>Remark:</strong> As with single failure type, the <code>method = &quot;mean&quot;</code> call to <code>survtmle</code> may be computationally intensive with many time points. This is especially true when there are additionally multiple failure types, as the function must repeat these calls to <code>SuperLearner</code> separately for each type of failure. In this case, calls to <code>survtmle</code> could be parallelized with one call to <code>survtmle</code> for each type of failure specifying <code>ftypeOfInterest</code>.</p>
+</div>
+</div>
+<div id="using-the-method-of-cause-specific-hazards-1" class="section level3">
+<h3>Using the method of cause-specific hazards</h3>
+<div id="covariate-adjustment-via-logistic-regression-2" class="section level4">
+<h4>Covariate adjustment via logistic regression</h4>
+<p>The TMLE based on cause-specific hazards can also be used to compute cumulative incidence estimates in settings with multiple failure types. As above, the <code>glm.ftime</code> formula may additionally include functions of time, as this formula is now being used in a pooled regression to estimate cause-specific hazard of each failure type over time.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 9: same as Fit 8 above, but using the &quot;hazard&quot; method</span>
+fit9 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;hazard&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit9</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4590612
+## 1 1 0.6314466
+## 0 2 0.2659013
+## 1 2 0.2751953
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  3.516292e-03 -1.629697e-03  5.883916e-05 -4.525266e-05
+## 1 1 -1.629697e-03  2.505506e-03 -5.379741e-05  8.922855e-05
+## 0 2  5.883916e-05 -5.379741e-05  3.877006e-03 -3.037918e-03
+## 1 2 -4.525266e-05  8.922855e-05 -3.037918e-03  3.410066e-03</code></pre>
+<p>We can also leverage the <code>SuperLearner</code> algorithm when using the method of cause-specific hazards with multiple failure types of interest.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 10: same as Fit 7 above, but using the &quot;hazard&quot; method</span>
+fit10 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                  <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                  <span class="dt">SL.trt =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                  <span class="dt">SL.ftime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                  <span class="dt">SL.ctime =</span> <span class="kw">c</span>(<span class="st">&quot;SL.glm&quot;</span>,<span class="st">&quot;SL.mean&quot;</span>,<span class="st">&quot;SL.step&quot;</span>),
+                  <span class="dt">method =</span> <span class="st">&quot;hazard&quot;</span>, <span class="dt">t0 =</span> t_0)
+fit10</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4561936
+## 1 1 0.6098020
+## 0 2 0.2895448
+## 1 2 0.2627577
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  2.599773e-03 -1.309696e-03  4.811715e-05  5.362138e-05
+## 1 1 -1.309696e-03  2.011762e-03 -1.172315e-05  6.302634e-05
+## 0 2  4.811715e-05 -1.172315e-05  3.036662e-03 -2.161558e-03
+## 1 2  5.362138e-05  6.302634e-05 -2.161558e-03  2.523458e-03</code></pre>
+<p>As with the iterated-mean based TMLE, we can obtain estimates of cumulative incidence of only certain failure types (via <code>ftypeOfInterest</code>); however, this does not necessarily result in faster computation, as it did in the case above. In situations where the convergence of the algorithm is an issue, it may be useful to invoke multiple calls to <code>survtmle</code> with singular <code>ftypeOfInterest</code>. If such convergence issues arise, please report them as <a href="https://github.com/benkeser/survtmle/issues">GitHub issues</a> or contact us at <a href="mailto:benkeser@emory.edu">benkeser@emory.edu</a>.</p>
+</div>
+</div>
+</div>
+<div id="estimation-in-bounded-models" class="section level2">
+<h2>Estimation in bounded models</h2>
+<p>In certain situations, we have knowledge that the incidence of an event is bounded below/above for every strata in the population. It is possible to incorporate these bounds into the TMLE estimation procedure to ensure that any resulting estimate of cumulative incidence is compatible with these bounds. Please refer to <span class="citation">Benkeser, Carone, and Gilbert (2017)</span> for more on bounded TMLEs and their potential benefits.</p>
+<p>Bounds can be passed to <code>survtmle</code> by creating a <code>data.frame</code> that contains columns with specific names. In particular, there should be a column named <code>&quot;t&quot;</code>. There should additionally be columns for the lower and upper bound for each type of failure. For example if there is only one type of failure (<code>ftype = 1</code> or <code>ftype = 0</code>) then the bounds <code>data.frame</code> can contain columns <code>&quot;l1&quot;</code>, and <code>&quot;u1&quot;</code> denote the lower and upper bounds, respectively, on the iterated conditional mean (for <code>method = &quot;mean&quot;</code>) or the conditional hazard function (for <code>method = &quot;hazard&quot;</code>). If there are two types of failure (<code>ftype = 1</code>, <code>ftype = 2</code>, or <code>ftype = 0</code>) then there can additionally be columns <code>&quot;l2&quot;</code> and <code>&quot;u2&quot;</code> denoting the lower and upper bounds, respectively, on the iterated conditional mean for type two failures (for <code>method = &quot;mean&quot;</code>) or the conditional cause-specific hazard function for type two failures (for <code>method = &quot;hazard&quot;</code>).</p>
+<p>Here is a simple example.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bf1 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">t =</span> <span class="kw">seq_len</span>(t_0), <span class="dt">l1 =</span> <span class="kw">rep</span>(<span class="fl">0.01</span>, t_0), <span class="dt">u1 =</span> <span class="kw">rep</span>(<span class="fl">0.99</span>, t_0))
+bf1</code></pre></div>
+<pre><code>##   t   l1   u1
+## 1 1 0.01 0.99
+## 2 2 0.01 0.99
+## 3 3 0.01 0.99
+## 4 4 0.01 0.99
+## 5 5 0.01 0.99
+## 6 6 0.01 0.99</code></pre>
+<p>Now that we have specified our bounds, we can invoke <code>survtmle</code> repeating our first example (“Fit 1”), but now restricting the iterated conditional means to follow the bounds specified above.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 11: Fit 2, but now specifying bounds on the iterated conditional means</span>
+fit11 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0,
+                 <span class="dt">bounds =</span> bf1)
+fit11</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4230616
+## 1 1 0.6028624
+## 0 2 0.2517208
+## 1 2 0.2967996
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  3.517185e-03  2.107583e-05 -1.688921e-03  5.968034e-05
+## 1 1  2.107583e-05  3.228259e-03 -2.394680e-05 -2.382745e-03
+## 0 2 -1.688921e-03 -2.394680e-05  2.544824e-03  7.730107e-05
+## 1 2  5.968034e-05 -2.382745e-03  7.730107e-05  2.615547e-03</code></pre>
+<p>When there are multiple failure types of interest, we can still provide bounds for the iterated conditional means (or the conditional hazard function, whichever is appropriate based on our specification of the <code>method</code> argument).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># need to make a data.frame of bounds in proper format two types of failure that</span>
+<span class="co"># are labeled with ftype = 1 and ftype = 2, so bounds should have columns 't',</span>
+<span class="co"># 'l1', 'u1', 'l2', and 'u2'.</span>
+bf2 &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">t =</span> <span class="kw">seq_len</span>(t_0),
+                  <span class="dt">l1 =</span> <span class="kw">rep</span>(<span class="fl">0.01</span>, t_0), <span class="dt">u1 =</span> <span class="kw">rep</span>(<span class="fl">0.99</span>, t_0),
+                  <span class="dt">l2 =</span> <span class="kw">rep</span>(<span class="fl">0.02</span>, t_0), <span class="dt">u2 =</span> <span class="kw">rep</span>(<span class="fl">0.99</span>, t_0)
+                 )
+bf2</code></pre></div>
+<pre><code>##   t   l1   u1   l2   u2
+## 1 1 0.01 0.99 0.02 0.99
+## 2 2 0.01 0.99 0.02 0.99
+## 3 3 0.01 0.99 0.02 0.99
+## 4 4 0.01 0.99 0.02 0.99
+## 5 5 0.01 0.99 0.02 0.99
+## 6 6 0.01 0.99 0.02 0.99</code></pre>
+<p>Now, we invoke <code>survtmle</code>, passing in the specified bounds using the appropriate argument:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Fit 12: same as Fit 5 above, but now include bounds</span>
+fit12 &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                  <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                  <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                  <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                  <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                  <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0,
+                  <span class="dt">bounds =</span> bf2)
+fit12</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.4230616
+## 1 1 0.6028624
+## 0 2 0.2524880
+## 1 2 0.2995662
+## 
+## $var
+##               0 1           1 1           0 2           1 2
+## 0 1  3.517185e-03  2.107583e-05 -1.695712e-03  6.011004e-05
+## 1 1  2.107583e-05  3.228259e-03 -2.426839e-05 -2.393105e-03
+## 0 2 -1.695712e-03 -2.426839e-05  2.554253e-03  7.964879e-05
+## 1 2  6.011004e-05 -2.393105e-03  7.964879e-05  2.640192e-03</code></pre>
+<p><strong>Remark 1:</strong> Please see the discussion in <span class="citation">Benkeser, Carone, and Gilbert (2017)</span> on how to select bounds for these procedures. Note that poorly chosen bounds can lead to instability in the estimation procedure.</p>
+<p><strong>Remark 2:</strong> While it is theoretically possible to use super learner to perform bounded estimation, many of the implemented algorithms are not currently designed to respect bounds. Nevertheless, it is possible to write one’s own algorithms to incorporate such bounds. However, for the sake of stability, we have restricted the bounded implementation to <code>glm</code> based covariate-adjustment.</p>
+<hr />
+</div>
+<div id="utility-functions" class="section level2">
+<h2>Utility functions</h2>
+<div id="estimating-cumulative-incidence-curves" class="section level3">
+<h3>Estimating cumulative incidence curves</h3>
+<p>The <code>survtmle</code> function provides the function <code>timepoints</code> to compute the estimated cumulative incidence over multiple timepoints. This function is invoked after an initial call to <code>survtmle</code> with option <code>returnModels = TRUE</code>. By setting this option, the <code>timepoints</code> function is able to recycle fits for the conditional treatment probability, censoring distribution, and, in the case of <code>method = &quot;hazard&quot;</code>, the hazard fits. Thus, invoking <code>timepoints</code> is faster than making repeated calls to <code>survtmle</code> with different <code>t0</code>.</p>
+<p>There is some subtlety involved to properly leveraging this facility. Recall that the censoring distribution fit (and cause-specific hazard fit) pools over all time points. Thus, in order to most efficiently use <code>timepoints</code>, the initial call to <code>survtmle</code> should be made setting option <code>t0</code> equal to the final time point at which one wants estimates of cumulative incidence. This allows these hazard fitting procedures to utilize all of the data to estimate the conditional hazard function.</p>
+<p>We demonstrate the use of <code>timepoints</code> below based on the following simulated data.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">set.seed</span>(<span class="dv">1234</span>)
+n &lt;-<span class="st"> </span><span class="dv">200</span>
+t_0 &lt;-<span class="st"> </span><span class="dv">6</span>
+trt &lt;-<span class="st"> </span><span class="kw">rbinom</span>(n, <span class="dv">1</span>, <span class="fl">0.5</span>)
+adjustVars &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">W1 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n)), <span class="dt">W2 =</span> <span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">2</span>)))
+ftime &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="dv">1</span> +<span class="st"> </span><span class="kw">runif</span>(n, <span class="dv">1</span>, <span class="dv">4</span>) -<span class="st"> </span>trt +<span class="st"> </span>adjustVars$W1 +<span class="st"> </span>adjustVars$W2)
+ftype &lt;-<span class="st"> </span><span class="kw">round</span>(<span class="kw">runif</span>(n, <span class="dv">0</span>, <span class="dv">1</span>))</code></pre></div>
+<p>Imagine that we would like cumulative incidence estimates at times <code>seq_len(t_0)</code> based on <code>fit2</code> above (mean-based TMLE using glm covariate adjustment). However, note that when we originally called <code>fit2</code> the option <code>returnModels</code> was set to its default value <code>FALSE</code>. Thus, we must refit this object setting the function to return the model fits.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Refit fit 2 returning models</span>
+fit2_rm &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;W1 + trt + t + I(t^2)&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;mean&quot;</span>, <span class="dt">t0 =</span> t_0,
+                 <span class="dt">returnModels =</span> <span class="ot">TRUE</span>)
+fit2_rm</code></pre></div>
+<pre><code>## $est
+##          [,1]
+## 0 1 0.5657950
+## 1 1 0.7411658
+## 
+## $var
+##              0 1          1 1
+## 0 1 0.0029470633 0.0002170549
+## 1 1 0.0002170549 0.0016411250</code></pre>
+<p>Now we can call <code>timepoints</code> to return estimates of cumulative incidence at each time <code>seq_len(t_0)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tp.fit2 &lt;-<span class="st"> </span><span class="kw">timepoints</span>(fit2_rm, <span class="dt">times =</span> <span class="kw">seq_len</span>(t_0))
+<span class="co"># print the object</span>
+tp.fit2</code></pre></div>
+<pre><code>## $est
+##   t1         t2         t3        t4        t5        t6
+## 1  0 0.01616033 0.08976902 0.1610393 0.3918143 0.5657950
+## 2  0 0.07450353 0.18960097 0.4279096 0.5784108 0.7411658
+## 
+## $var
+##   t1           t2           t3          t4          t5          t6
+## 1 NA 0.0001427635 0.0007369614 0.001131293 0.002291745 0.002947063
+## 2 NA 0.0006741195 0.0015590438 0.002276863 0.002277642 0.001641125</code></pre>
+<p>Internally, <code>timepoints</code> is making calls to <code>survtmle</code>, but is passing in the fitted treatment and censoring fits from <code>fit2_rm$trtMod</code> and <code>fit2_rm$ctimeMod</code>. However, for <code>method = &quot;mean&quot;</code> the function is still fitting the iterated means separately for each time required by the call to <code>timepoints</code>. Thus, the call to <code>timepoints</code> may be quite slow if <code>method = &quot;mean&quot;</code>, <code>SL.ftime</code> is specified (as opposed to <code>glm.ftime</code>), and/or many times are passed in via <code>times</code>. Future implementations may attempt to avoid this extra model fitting. For now, if many times are required, we recommend using <code>method = &quot;hazard&quot;</code>, which is able to recycle all of the model fits. Below is an example of this.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Refit Fit 4, setting returnModels=TRUE this time...</span>
+fit4_rm &lt;-<span class="st"> </span><span class="kw">survtmle</span>(<span class="dt">ftime =</span> ftime, <span class="dt">ftype =</span> ftype,
+                 <span class="dt">trt =</span> trt, <span class="dt">adjustVars =</span> adjustVars,
+                 <span class="dt">glm.trt =</span> <span class="st">&quot;W1 + W2&quot;</span>,
+                 <span class="dt">glm.ftime =</span> <span class="st">&quot;trt + W1 + W2 + t + I(t^2)&quot;</span>,
+                 <span class="dt">glm.ctime =</span> <span class="st">&quot;trt + W1 + W2*t&quot;</span>,
+                 <span class="dt">method =</span> <span class="st">&quot;hazard&quot;</span>, <span class="dt">t0 =</span> t_0,
+                 <span class="dt">returnModels =</span> <span class="ot">TRUE</span>)
+<span class="co"># call timepoints based on this fit</span>
+tp.fit4 &lt;-<span class="st"> </span><span class="kw">timepoints</span>(fit4_rm, <span class="dt">times =</span> <span class="kw">seq_len</span>(t_0))
+<span class="co"># print the object</span>
+tp.fit4</code></pre></div>
+<pre><code>## $est
+##   t1         t2         t3        t4        t5        t6
+## 1  0 0.03457851 0.09883419 0.2215276 0.3966049 0.5864610
+## 2  0 0.07816849 0.20103813 0.3901823 0.6014791 0.7788141
+## 
+## $var
+##   t1           t2          t3          t4          t5          t6
+## 1 NA 0.0001481315 0.000799149 0.001273434 0.002852316 0.002813856
+## 2 NA 0.0007267294 0.001906479 0.003232722 0.003374974 0.001813312</code></pre>
+<p>There is a plotting method available for <code>timepoints</code> to plot cumulative incidence over time in each treatment group and for each failure type.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot raw cumulative incidence</span>
+<span class="kw">plot</span>(tp.fit4, <span class="dt">type =</span> <span class="st">&quot;raw&quot;</span>)</code></pre></div>
+<p><img src="data:image/png;base64,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pKGNP//8c1qScFvCJ7gPDM9eeeUV8+uvv4ZPpW3nak+h6ukK/e2338y8efPMP/7xj9j2uvThX9vbk/t0xBFHmD333FOG4+F749KG6wymTzzxRNr95VnlA0zbo4Tn5vXXXzcPP/xwZB3Dzzr344UXXpC/bB/t77//3vzzn/9MPZuff/65fPjDZf/www/m2WefNY899pjhfXASfoZ5uUpeDj300KBhw4aBfRCytsUqoMDeWDl/++23S9fd9pDS0rsuvb0Bctx+mSSd7VUFa6+9tmxbEIM//elPgbW/BLvttlvqmFV0gb25qfyihlZ0O7l+5MiRWdPZGynDR9LVrVs3lf+BBx4YMMy0D1HqGGn4sw9JEB622IcwsEo4OOWUU1LluI2999472HbbbWWX+owYMULKoaw6deoEVokFd955p0ue9TdqCLb99tsHJ598ckBdXd34HThwYBAeJr377rvBdtttJ2mswgzq168fHHnkkan7F26Lq4BVZkHTpk3lGurK9fZjI/sub9/2FKqe1O3VV18NWrZsmWoL7bW2x8B+QFzVY3933XXX1P244447JJ+HHnqowjWuzr169ZI0lFOvXr1g1qxZwbRp02T4xjGGcuBiFXQqj0cffTTgeeQ8ePOLucJ+2FJp3LN+7733yv0gDX9NmjRJM1+A8Z///Gcp2+V10kknBa1atQoYSjrhHvIshcvcb7/9Ajs6SX+G3QWl/LvZZpsFXbt29W5CvgqIF+S+++4LUA7Dhw8XUFF4Rx99dMDLxEO48cYbB61bt07VobIKCHvQWmutFdivaWC/SpI/5XAjeUB5sKyhWfZRmChCJPOl5SFs3LhxwAPjhPrz0FgjvRy68MILJR8U4qeffhrY3ktw6qmnyjHb23OXRf5mU0C8FH379g243n71gqOOOkrymzFjhuTzxRdfBJtvvnnQuXPnwPYeA9sVD2677TZJc9NNN0mazLbw8Vh//fUDHmBebPtlDazxXq4BF6eAfNvDy1yIevIybbDBBoEd9gbYwsCadm+66aaB7c1E4hY+SPupv7sftscarLvuukGfPn3CyWSbOnPvDjnkkGDBggXB888/H/DR49nkWZsyZUqwZMmSwE66SJ5giHBfUQS77LKL4A1WPFvWLBF07NgxpfSdAkLhXHPNNfKso7gaNGggtlTJzP7DRw0bK/eTvOywX5QP7XAK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" /><!-- --></p>
+<p>Because the cumulative incidence function is being invoked pointwise, it is possible that the resulting curve is not monotone. However, it is possible to show that projecting this curve onto a monotone function via isotonic regression results in an estimate with identical asymptotic properties to the pointwise estimate. Therefore, we additionally provide an option <code>type = &quot;iso&quot;</code> (the default) that provides these smoothed curves.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># plot smoothed cumulative incidence</span>
+<span class="kw">plot</span>(tp.fit4)</code></pre></div>
+</div>
+</div>
+<div id="section" class="section level2">
+<h2><img src="data:image/png;base64,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" /><!-- --></h2>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session Information</h2>
+<pre><code>## R version 3.4.1 (2017-06-30)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: OS X El Capitan 10.11.6
+## 
+## Matrix products: default
+## BLAS: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.4/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] C/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] nnls_1.4       survtmle_1.0.0 tibble_1.3.3  
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_0.12.11        knitr_1.16          magrittr_1.5       
+##  [4] munsell_0.4.3       colorspace_1.3-2    lattice_0.20-35    
+##  [7] rlang_0.1.1         stringr_1.2.0       plyr_1.8.4         
+## [10] tools_3.4.1         grid_3.4.1          gtable_0.2.0       
+## [13] SuperLearner_2.0-21 htmltools_0.3.6     yaml_2.1.14        
+## [16] lazyeval_0.2.0      rprojroot_1.2       digest_0.6.12      
+## [19] Matrix_1.2-10       tidyr_0.6.3         ggplot2_2.2.1      
+## [22] evaluate_0.10.1     rmarkdown_1.6       labeling_0.3       
+## [25] stringi_1.1.5       compiler_3.4.1      scales_0.4.1       
+## [28] backports_1.1.0</code></pre>
+<hr />
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-bang2005doubly">
+<p>Bang, Heejung, and James M Robins. 2005. “Doubly Robust Estimation in Missing Data and Causal Inference Models.” <em>Biometrics</em> 61 (4). Wiley Online Library: 962–73. doi:<a href="https://doi.org/10.1111/j.1541-0420.2005.00377.x">10.1111/j.1541-0420.2005.00377.x</a>.</p>
+</div>
+<div id="ref-benkeser2017improved">
+<p>Benkeser, David, Marco Carone, and Peter B Gilbert. 2017. “Improved Estimation of the Cumulative Incidence of Rare Outcomes.” <em>Statistics in Medicine</em>. Wiley Online Library. doi:<a href="https://doi.org/10.1002/sim.7337">10.1002/sim.7337</a>.</p>
+</div>
+<div id="ref-breiman1996stacked">
+<p>Breiman, Leo. 1996. “Stacked Regressions.” <em>Machine Learning</em> 24 (1). Springer: 49–64. doi:<a href="https://doi.org/10.1007/BF00117832">10.1007/BF00117832</a>.</p>
+</div>
+<div id="ref-vdlgruber:2012:ijb">
+<p>Laan, Mark J van der, and Susan Gruber. 2012. “Targeted Minimum Loss Based Estimation of Causal Effects of Multiple Time Point Interventions.” Journal Article. <em>The International Journal of Biostatistics</em> 8 (1): 1–34. doi:<a href="https://doi.org/10.1515/1557-4679.1370">10.1515/1557-4679.1370</a>.</p>
+</div>
+<div id="ref-vdlpolley:2007:statappgenetics">
+<p>Laan, Mark J van der, Eric C Polley, and Alan E Hubbard. 2007. “Super Learner.” Journal Article. <em>Statistical Applications in Genetics and Molecular Biology</em> 6 (1): 1–23. doi:<a href="https://doi.org/10.2202/1544-6115.1309">10.2202/1544-6115.1309</a>.</p>
+</div>
+<div id="ref-moore2009increasing">
+<p>Moore, Kelly L, and Mark J van der Laan. 2009. “Increasing Power in Randomized Trials with Right Censored Outcomes Through Covariate Adjustment.” <em>Journal of Biopharmaceutical Statistics</em> 19 (6). Taylor &amp; Francis: 1099–1131. doi:<a href="https://doi.org/10.1080/10543400903243017">10.1080/10543400903243017</a>.</p>
+</div>
+<div id="ref-robins1999ltmle">
+<p>Robins, Jamie M. 1999. “Robust Estimation in Sequentially Ignorable Missing Data and Causal Inference Models.” Proceedings of the American Statistical Association Section on Bayesian Statistical Science. <a href="http://www.biostat.harvard.edu/robins/jsaprocpat1.pdf" class="uri">http://www.biostat.harvard.edu/robins/jsaprocpat1.pdf</a>.</p>
+</div>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
