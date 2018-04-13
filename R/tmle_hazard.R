@@ -55,6 +55,11 @@
 #'        for the estimate of the conditional probability of treatment. Ignored
 #'        if \code{SL.trt} is not equal to \code{NULL}. The formula can include
 #'        any variables found in \code{names(adjustVars)}.
+#' @param glm.family The type of regression to be performed if fitting GLMs in
+#'        the estimation and fluctuation procedures. The default is "binomial"
+#'        for logistic regression. Only change this from the default if there
+#'        are justifications that are well understood. This is passed directly
+#'        to \code{estimateCensoring} and \code{estimateHazards}.
 #' @param returnIC A boolean indicating whether to return vectors of influence
 #'        curve estimates. These are needed for some post-hoc comparisons, so it
 #'        is recommended to leave as \code{TRUE} (the default) unless the user
@@ -159,22 +164,34 @@
 #' @export
 #'
 
-hazard_tmle <- function(ftime, ftype, trt,
-                        t0 = max(ftime[ftype > 0]), adjustVars = NULL,
-                        SL.ftime = NULL, SL.ctime = NULL, SL.trt = NULL,
-                        glm.ftime = NULL, glm.ctime = NULL, glm.trt = "1",
-                        returnIC = TRUE, returnModels = FALSE,
+hazard_tmle <- function(ftime,
+                        ftype,
+                        trt,
+                        t0 = max(ftime[ftype > 0]),
+                        adjustVars = NULL,
+                        SL.ftime = NULL,
+                        SL.ctime = NULL,
+                        SL.trt = NULL,
+                        glm.ftime = NULL,
+                        glm.ctime = NULL,
+                        glm.trt = "1",
+                        glm.family = "binomial",
+                        returnIC = TRUE,
+                        returnModels = FALSE,
                         ftypeOfInterest = unique(ftype[ftype != 0]),
                         trtOfInterest = unique(trt),
-                        bounds = NULL, verbose = FALSE,
-                        tol = 1 / (length(ftime)), maxIter = 100,
-                        gtol = 1e-3, ...) {
+                        bounds = NULL,
+                        verbose = FALSE,
+                        tol = 1 / (length(ftime)),
+                        maxIter = 100,
+                        gtol = 1e-3,
+                        ...) {
 
   # assemble data frame of necessary variables
   n <- length(ftime)
   id <- seq_len(n)
   dat <- data.frame(id = id, ftime = ftime, ftype = ftype, trt = trt)
-  if(!is.null(adjustVars)) dat <- cbind(dat, adjustVars)
+  if (!is.null(adjustVars)) dat <- cbind(dat, adjustVars)
 
   nJ <- length(ftypeOfInterest)
   allJ <- sort(unique(ftype[ftype != 0]))
@@ -185,104 +202,139 @@ hazard_tmle <- function(ftime, ftype, trt,
   uniqtrt <- sort(trtOfInterest)
 
   # estimate trt probabilities
-  trtOut <- estimateTreatment(dat = dat, ntrt = ntrt, uniqtrt = uniqtrt,
-                              adjustVars = adjustVars,
-                              SL.trt = SL.trt, glm.trt = glm.trt,
-                              returnModels = returnModels, gtol = gtol)
+  trtOut <- estimateTreatment(
+    dat = dat,
+    ntrt = ntrt,
+    uniqtrt = uniqtrt,
+    adjustVars = adjustVars,
+    SL.trt = SL.trt,
+    glm.trt = glm.trt,
+    returnModels = returnModels,
+    gtol = gtol
+  )
   dat <- trtOut$dat
   trtMod <- trtOut$trtMod
 
   # make long version of data sets needed for estimation and prediction
-  dataList <- makeDataList(dat = dat, J = allJ, ntrt = ntrt, uniqtrt = uniqtrt,
-                           t0 = t0, bounds = bounds)
- 
+  dataList <- makeDataList(
+    dat = dat, J = allJ, ntrt = ntrt, uniqtrt = uniqtrt,
+    t0 = t0, bounds = bounds
+  )
+
   # estimate censoring
-  censOut <- estimateCensoring(dataList = dataList,
-                               ntrt = ntrt, uniqtrt = uniqtrt, t0 = t0,
-                               verbose = verbose, adjustVars = adjustVars,
-                               SL.ctime = SL.ctime, glm.ctime = glm.ctime,
-                               returnModels = returnModels, gtol = gtol)
+  censOut <- estimateCensoring(
+    dataList = dataList,
+    ntrt = ntrt,
+    uniqtrt = uniqtrt,
+    t0 = t0,
+    verbose = verbose,
+    adjustVars = adjustVars,
+    SL.ctime = SL.ctime,
+    glm.ctime = glm.ctime,
+    glm.family = glm.family,
+    returnModels = returnModels,
+    gtol = gtol
+  )
   dataList <- censOut$dataList
   ctimeMod <- censOut$ctimeMod
 
   # estimate cause specific hazards
-  estOut <- estimateHazards(dataList = dataList, J = allJ,
-                            verbose = verbose, bounds = bounds,
-                            adjustVars = adjustVars,
-                            SL.ftime = SL.ftime, glm.ftime = glm.ftime,
-                            returnModels = returnModels)
+  estOut <- estimateHazards(
+    dataList = dataList,
+    J = allJ,
+    verbose = verbose,
+    bounds = bounds,
+    adjustVars = adjustVars,
+    SL.ftime = SL.ftime,
+    glm.ftime = glm.ftime,
+    glm.family = glm.family,
+    returnModels = returnModels
+  )
   dataList <- estOut$dataList
   ftimeMod <- estOut$ftimeMod
   # check for convergence
   suppressWarnings(
-    if(all(dataList[[1]] == "convergence failure")) {
+    if (all(dataList[[1]] == "convergence failure")) {
       return("estimation convergence failure")
     }
   )
 
   # calculate cum inc and clever covariates needed for fluctuations
-  dataList <- updateVariables(dataList = dataList, allJ = allJ,
-                              ofInterestJ = ofInterestJ,
-                              nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
-                              t0 = t0, verbose = verbose)
- 
+  dataList <- updateVariables(
+    dataList = dataList, allJ = allJ,
+    ofInterestJ = ofInterestJ,
+    nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
+    t0 = t0, verbose = verbose
+  )
+
   # calculate influence function
-  dat <- getHazardInfluenceCurve(dataList = dataList, dat = dat,
-                                 ofInterestJ = ofInterestJ, allJ = allJ,
-                                 nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
-                                 verbose = verbose, t0 = t0)
+  dat <- getHazardInfluenceCurve(
+    dataList = dataList, dat = dat,
+    ofInterestJ = ofInterestJ, allJ = allJ,
+    nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
+    verbose = verbose, t0 = t0
+  )
   infCurves <- dat[, grep("D.j", names(dat))]
   meanIC <- colMeans(infCurves)
- 
-  attr(dataList, "fluc") <- rep(Inf, ntrt * nJ^2); ct <- 0
-  while(any(abs(meanIC) > tol) & ct <= maxIter) {
+
+  attr(dataList, "fluc") <- rep(Inf, ntrt * nJ ^ 2)
+  ct <- 0
+  while (any(abs(meanIC) > tol) & ct <= maxIter) {
     ct <- ct + 1
-    dataList <- fluctuateHazards(dataList = dataList, ofInterestJ = ofInterestJ,
-                                 tol = tol, allJ = allJ, nJ = nJ,
-                                 uniqtrt = uniqtrt, ntrt = ntrt,
-                                 verbose = verbose, t0 = t0)
+    dataList <- fluctuateHazards(
+      dataList = dataList, ofInterestJ = ofInterestJ,
+      tol = tol, allJ = allJ, nJ = nJ,
+      uniqtrt = uniqtrt, ntrt = ntrt,
+      verbose = verbose, t0 = t0
+    )
     suppressWarnings(
-      if(all(dataList[[1]] == "convergence failure")) {
+      if (all(dataList[[1]] == "convergence failure")) {
         return("fluctuation convergence failure")
       }
     )
 
     # calculate influence function
-    dat <- getHazardInfluenceCurve(dataList = dataList, dat = dat,
-                                   ofInterestJ = ofInterestJ, allJ = allJ,
-                                   nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
-                                   verbose = verbose, t0 = t0)
+    dat <- getHazardInfluenceCurve(
+      dataList = dataList, dat = dat,
+      ofInterestJ = ofInterestJ, allJ = allJ,
+      nJ = nJ, uniqtrt = uniqtrt, ntrt = ntrt,
+      verbose = verbose, t0 = t0
+    )
     infCurves <- dat[, grep("D.j", names(dat))]
     meanIC <- colMeans(infCurves)
 
-    if(verbose) {
+    if (verbose) {
       # print(attr(dataList,"fluc"))
       cat("TMLE Iteration ", ct, "  : ", round(meanIC, 4), "\n")
     }
   }
-  if(ct == maxIter + 1) {
+  if (ct == maxIter + 1) {
     warning("TMLE fluctuations did not converge. Check that meanIC is adequately
             small and proceed with caution.")
   }
 
   # calculate point estimate
   est <- rowNames <- NULL
-  for(j in ofInterestJ) {
-    for(z in uniqtrt) {
-      eval(parse(text = paste("est <- rbind(est, dat$margF", j, ".z", z,
-                              ".t0[1])", sep = "")))
+  for (j in ofInterestJ) {
+    for (z in uniqtrt) {
+      eval(parse(text = paste(
+        "est <- rbind(est, dat$margF", j, ".z", z,
+        ".t0[1])", sep = ""
+      )))
       rowNames <- c(rowNames, paste(c(z, j), collapse = " "))
     }
   }
   row.names(est) <- rowNames
 
   # calculate standard error
-  var <- t(as.matrix(infCurves)) %*% as.matrix(infCurves) / n^2
+  var <- t(as.matrix(infCurves)) %*% as.matrix(infCurves) / n ^ 2
   row.names(var) <- colnames(var) <- rowNames
 
-  out <- list(est = est, var = var, meanIC = meanIC, ic = infCurves,
-              trtMod = trtMod, ftimeMod = ftimeMod, ctimeMod = ctimeMod,
-              ftime = ftime, ftype = ftype, trt = trt, adjustVars = adjustVars)
+  out <- list(
+    est = est, var = var, meanIC = meanIC, ic = infCurves,
+    trtMod = trtMod, ftimeMod = ftimeMod, ctimeMod = ctimeMod,
+    ftime = ftime, ftype = ftype, trt = trt, adjustVars = adjustVars
+  )
   class(out) <- "survtmle"
   return(out)
 }
