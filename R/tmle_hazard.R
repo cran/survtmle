@@ -275,9 +275,13 @@ hazard_tmle <- function(ftime,
     verbose = verbose, t0 = t0
   )
   infCurves <- dat[, grep("D.j", names(dat))]
-  meanIC <- colMeans(infCurves)
+  if(!is.numeric(infCurves)){
+    meanIC <- colMeans(infCurves)    
+  }else{
+    meanIC <- mean(infCurves)
+  }
 
-  attr(dataList, "fluc") <- rep(Inf, ntrt * nJ ^ 2)
+  attr(dataList, "fluc") <- rep(Inf, ntrt * nJ^2)
   ct <- 0
   while (any(abs(meanIC) > tol) & ct <= maxIter) {
     ct <- ct + 1
@@ -319,7 +323,8 @@ hazard_tmle <- function(ftime,
     for (z in uniqtrt) {
       eval(parse(text = paste(
         "est <- rbind(est, dat$margF", j, ".z", z,
-        ".t0[1])", sep = ""
+        ".t0[1])",
+        sep = ""
       )))
       rowNames <- c(rowNames, paste(c(z, j), collapse = " "))
     }
@@ -327,7 +332,7 @@ hazard_tmle <- function(ftime,
   row.names(est) <- rowNames
 
   # calculate standard error
-  var <- t(as.matrix(infCurves)) %*% as.matrix(infCurves) / n ^ 2
+  var <- t(as.matrix(infCurves)) %*% as.matrix(infCurves) / n^2
   row.names(var) <- colnames(var) <- rowNames
 
   out <- list(

@@ -60,7 +60,7 @@
 #'         which is the estimated conditional survival distribution for the
 #'         censoring variable evaluated at the each of the rows of each
 #'         \code{data.frame} in \code{dataList}.
-#'
+#' @export
 
 estimateCensoring <- function(dataList,
                               adjustVars,
@@ -170,7 +170,8 @@ estimateCensoring <- function(dataList,
           g_dC <-
             suppressWarnings(
               1 - predict(
-                ctimeMod, newdata = x[, c(
+                ctimeMod,
+                newdata = x[, c(
                   "t", "trt",
                   names(adjustVars)
                 )],
